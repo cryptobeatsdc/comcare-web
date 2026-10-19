@@ -34,7 +34,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Validation: zod 4 (shared lead schema)
 - Images: sharp installed for production image optimization
 - Linting: ESLint 10 flat config (`eslint.config.mjs`). `next lint` no longer exists — run `npm run lint`
-- Hosting target: Vercel (not configured yet)
+- Hosting: Vercel (repo GitHub `cryptobeatsdc/comcare-web`, deploy pendiente). Leads en Postgres/Neon; JSON local en desarrollo.
 
 ## Commands & Environment Gotchas (Windows / PowerShell)
 - Install deps: `$env:npm_config_allow_scripts=$null; npm install` (the user's global npm config blocks postinstall scripts without this)
@@ -67,7 +67,7 @@ src/app/[lang]/       → root segment: there is NO src/app/layout.tsx anymore
   not-found.tsx       → in-[lang] 404
 src/app/global-not-found.tsx → global 404 for unmatched routes (requires `experimental.globalNotFound` in next.config.mjs)
 src/app/globals.css   → Tailwind 4 @theme tokens + custom utility classes
-src/app/api/leads/route.ts → POST leads: zod validation, in-memory rate limit 10/min, persists to data/leads.json
+src/app/api/leads/route.ts → POST leads: zod validation, in-memory rate limit 10/min, persists via src/lib/leads/store.ts (Postgres/Neon in Vercel, data/leads.json locally)
 src/components/       → one file per section/page (Hero, SolutionsSlider, Visit, LeadForm, PageShell, PageHero, ServicesView, BusinessView, RemoteView, ServiceDetailView, LegalView, MapEmbed, MapConsentReset, ...; I18nProvider + useI18n())
 src/lib/i18n/         → config.ts (LOCALES, LANG_COOKIE, fromAcceptLanguage — genera sobre LOCALES), es.ts (copy source of truth + tipo Dictionary), en.ts / nl.ts / de.ts (typed as Dictionary), index.ts (getDictionary)
 src/lib/catalog.ts    → structure of the 6 services (id + foto + ServiceCopy type); the copy lives in the dictionaries
@@ -78,8 +78,10 @@ src/lib/seo.ts        → SITE_URL (`NEXT_PUBLIC_SITE_URL`, fallback localhost:3
 src/app/sitemap.ts    → sitemap.xml estático: 40 URLs con alternates hreflang mientras las legales estén pendientes (4 idiomas × 10 páginas); al rellenar `company.ts` pasa a 56 (4 × 14)
 src/app/robots.ts     → robots.txt: allow todo, disallow /api/, enlace al sitemap
 src/lib/leads/schema.ts → zod lead schema (incl. villa[] selection)
+src/lib/leads/store.ts → saveLead(): Neon Postgres when DATABASE_URL (or POSTGRES_URL) exists, data/leads.json otherwise; auto-creates the table
+db/leads.sql          → reference schema for the leads table
 public/img, public/video → free-use assets (replace with real ones later; if the hero video changes, regenerate `public/img/hero-poster.jpg` from its first frame so the poster never flashes)
-data/leads.json       → persisted leads (MVP storage)
+data/leads.json       → local-only lead fallback (git-ignored)
 ```
 - i18n: copy is NEVER hardcoded in components. Adding text = adding a key in `es.ts` AND in the rest of dictionaries (`en.ts`, `nl.ts`, `de.ts` are typed as `Dictionary`; TS fails if a key is missing or extra). Interactive components read `useI18n()`; simple server components (TrustBar, Process, Statement, Faq, Footer) receive their slice via props (`t={dict.x}`).
 - Routes: `/es`, `/en`, `/nl`, `/de` are prerendered (SSG); `/` redirects via proxy (307). The Navbar language switcher (rendered from `LOCALES`) stores the `lang` cookie (1 year) and preserves the current path.
@@ -100,7 +102,7 @@ data/leads.json       → persisted leads (MVP storage)
 6. ✅ Sección «Visítanos» (Oct 2026): mapa de Google de la tienda, dirección, horario, teléfono, cómo llegar y zona de cobertura (Jávea · Moraira · Calpe · Dénia), en los 4 idiomas
 7. ✅ SEO técnico (Oct 2026): sitemap.xml (40 URLs con hreflang) + robots.txt, datos estructurados JSON-LD (LocalBusiness con datos reales, FAQPage, BreadcrumbList), Open Graph/Twitter con imagen 2000×1333 y og:locale por idioma, metadataBase. Dominio real pendiente: definir `NEXT_PUBLIC_SITE_URL`
 8. ✅ Páginas legales + consentimiento del mapa (Oct 2026): aviso legal, privacidad y cookies en 4 idiomas con slugs localizados, hub `/legal` y enlaces en footer/formulario; mapa de Google con carga previa aceptación y retirada del consentimiento desde la política de cookies. ⏳ Pendiente (aplazado por el usuario hasta tener los datos): razón social, CIF/NIF, correo y registro en `src/lib/company.ts` — se muestran como «Por completar» + aviso de borrador; revisión legal del texto por un asesor
-9. Later phases: Postgres+Drizzle persistence, AI assistant, admin panel, multi-org SaaS
+9. Later phases: Drizzle ORM/admin panel over the Neon leads table, AI assistant, multi-org SaaS
 
 ## Blocked / Waiting on User
 - Real photos & video of the store and installations (replace Unsplash/Pexels placeholders)

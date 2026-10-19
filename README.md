@@ -11,6 +11,7 @@ Landing de alta conversión para **ComCare**, servicios tecnológicos en Benitac
 - TypeScript 7 nativo (`tsc`) + API TS 6 para herramientas (patrón oficial side-by-side)
 - Tailwind CSS 4 (CSS-first: tokens en `src/app/globals.css` con `@theme`)
 - framer-motion 14, lucide-react, @radix-ui/react-accordion, zod 4, sharp
+- @neondatabase/serverless 1.x (leads en Postgres/Neon; JSON local en desarrollo)
 - ESLint 10 (flat config en `eslint.config.mjs`)
 
 ## Comandos
@@ -26,6 +27,15 @@ npm run lint       # eslint .
 > En esta máquina (PowerShell): anteponer `$env:npm_config_allow_scripts=$null;` a los `npm install`.
 > Nunca ejecutar `npm run build` con un servidor activo sobre la misma carpeta `.next`.
 
+## Deploy en Vercel
+
+1. Importar el repo en [vercel.com/new](https://vercel.com/new) (framework Next.js, root `./`).
+2. Crear la base de datos en **Storage → Create Database → Postgres (Neon)** y conectarla al proyecto. Vercel inyecta `DATABASE_URL` (la API también acepta `POSTGRES_URL`).
+3. Definir `NEXT_PUBLIC_SITE_URL` con el dominio final (ej. `https://comcare-web.vercel.app`) y redeployar.
+4. La tabla `leads` se crea sola en el primer envío; el esquema de referencia está en `db/leads.sql`.
+
+Sin `DATABASE_URL` la API guarda en `data/leads.json` solo en local. En Vercel, sin base de datos, el formulario devuelve error y muestra el teléfono.
+
 ## Estructura
 
 ```
@@ -34,7 +44,9 @@ src/app/[lang]/     layout raíz (html lang, fuentes, metadata + hreflang), page
 src/app/[lang]/[section]        hub de soluciones, para-empresas, asistencia-remota e información legal (16 páginas, 4 idiomas)
 src/app/[lang]/[section]/[item] detalle de cada solución + documentos legales (36 páginas; slug traducido por idioma)
 src/app/global-not-found.tsx  404 global multilingüe (rutas sin coincidencia)
-src/app/api/leads/  endpoint POST de leads (zod + rate-limit + persistencia en data/leads.json)
+src/app/api/leads/  endpoint POST de leads (zod + rate-limit + Postgres en Vercel; JSON local en desarrollo)
+src/lib/leads/store.ts  guardado de leads (Neon si hay DATABASE_URL; data/leads.json si no)
+db/leads.sql        esquema de la tabla (la API la crea sola en el primer envío)
 src/components/     una sección por archivo (Hero, SolutionsSlider, LeadForm, ...)
 src/lib/i18n/       diccionarios ES/EN/NL/DE (todo el copy) + config de idiomas
 src/lib/catalog.ts  estructura de los 6 servicios (el copy está en los diccionarios)

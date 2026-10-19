@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { leadSchema } from "@/lib/leads/schema";
+import { saveLead, type LeadRecord } from "@/lib/leads/store";
+
+export const runtime = "nodejs";
 
 // Rate-limit simple en memoria (MVP, no apto para multi-instancia)
 const hits = new Map<string, { count: number; ts: number }>();
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const record = {
+  const record: LeadRecord = {
     id: `lead_${Date.now()}`,
     createdAt: new Date().toISOString(),
     ip,
@@ -68,19 +69,9 @@ export async function POST(req: Request) {
   };
 
   try {
-    const dir = path.join(process.cwd(), "data");
-    await fs.mkdir(dir, { recursive: true });
-    const file = path.join(dir, "leads.json");
-    let arr: unknown[] = [];
-    try {
-      const raw = await fs.readFile(file, "utf8");
-      arr = JSON.parse(raw) as unknown[];
-    } catch {
-      arr = [];
-    }
-    arr.push(record);
-    await fs.writeFile(file, JSON.stringify(arr, null, 2), "utf8");
-  } catch {
+    await saveLead(record);
+  } catch (error) {
+    console.error("[leads] No se pudo guardar el lead:", error);
     return NextResponse.json(
       { ok: false, error: "No se pudo guardar. Llámanos por teléfono." },
       { status: 500 }
