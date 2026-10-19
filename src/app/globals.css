@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/* Fuentes (next/font) — inline para no colisionar con las variables de next/font */
+@theme inline {
+  --font-display: var(--font-display), Georgia, serif;
+  --font-body: var(--font-body), system-ui, sans-serif;
+}
+
+/* Tokens de diseño (paleta Helios Home C) */
+@theme {
+  --color-marfil: #f6f4f1;
+  --color-ink: #191919;
+  --color-navy: #191919;
+  --color-lima: #cddc39;
+  --color-arena: #6f6a63;
+  --color-solar: #d9b800;
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulseDot: pulseDot 1.8s ease-in-out infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes pulseDot {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(1.6);
+    }
+  }
+}
+
+:root {
+  --background: #f6f4f1;
+  --foreground: #191919;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.hero-scrim {
+  background: linear-gradient(
+    90deg,
+    rgba(8, 10, 18, 0.78) 0%,
+    rgba(8, 10, 18, 0.55) 38%,
+    rgba(8, 10, 18, 0.15) 65%,
+    rgba(8, 10, 18, 0) 85%
+  );
+}
+
+.hero-photo-fallback {
+  background:
+    radial-gradient(120% 90% at 80% 10%, rgba(245, 168, 0, 0.35), transparent 55%),
+    radial-gradient(100% 100% at 20% 100%, rgba(25, 25, 25, 0.9), transparent 60%),
+    linear-gradient(180deg, #2b3a4a 0%, #4a5a6a 35%, #c9a86a 70%, #1c1917 100%);
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='a'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='3' stitchTiles='stitch' type='fractalNoise'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+/* Botón con label rodante estilo Helios (sin copiar diseño) */
+.btn-roll {
+  position: relative;
+  overflow: hidden;
+}
+.btn-roll .btn-labels {
+  display: block;
+  overflow: hidden;
+  height: 1.5em;
+}
+.btn-roll .btn-track {
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-roll:hover .btn-track {
+  transform: translateY(-1.5em);
+}
+
+/* Zoom lento hero para dar movimiento sin vídeo */
+@keyframes hero-drift {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.1); }
+}
+.hero-drift {
+  animation: hero-drift 24s ease-in-out infinite alternate;
+}
+
+/* Cards: imagen con parallax-hover sobrio */
+.card-zoom img,
+.card-zoom .card-photo {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-zoom:hover img,
+.card-zoom:hover .card-photo {
+  transform: scale(1.05);
+}
+
+:focus-visible {
+  outline: 2px solid #a9957b;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
